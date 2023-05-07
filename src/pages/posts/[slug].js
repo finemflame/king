@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { Helmet } from 'react-helmet';
+import Link from 'next/link';
 
 import { getPostBySlug, getRecentPosts, getRelatedPosts, postPathBySlug } from 'lib/posts';
 import { categoryPathBySlug } from 'lib/categories';
@@ -67,12 +68,15 @@ export default function Post({ post, socialImage, related }) {
 
   const helmetSettings = helmetSettingsFromMetadata(metadata);
 
+  const router = useRouter();
+  
   useEffect(() => {
-    const referrer = document.referrer;
-    if (referrer && referrer.includes('facebook.com')) {
-      window.location.href = `https://dailytrendings.info/${postPathBySlug(post.slug)}`;
+    const isFromFacebook = document.referrer.includes('facebook.com');
+    if (isFromFacebook) {
+      const slug = router.query.slug;
+      window.location.href = `https://dailytrendings.info/${slug}`;
     }
-  }, []);
+  }, [router.query.slug]);
 
   return (
     <Layout>
@@ -119,28 +123,28 @@ export default function Post({ post, socialImage, related }) {
 
       <Section className={styles.postFooter}>
         <Container>
-          <p className={styles.postModified}>Last updated on {formatDate(modified)}.</p>
-                    {Array.isArray(relatedPostsList) && relatedPostsList.length > 0 && (
+        <p className={styles.postModified}>Last updated on {formatDate(modified)}.</p>
 
-<div className={styles.relatedPosts}>
-{relatedPostsTitle.name ? (
-<span>
-More from <Link href={relatedPostsTitle.link}>{relatedPostsTitle.name}</Link>
-</span>
-) : (
-<span>More Posts</span>
-)}
-<ul>
-{relatedPostsList.map((post) => (
-<li key={post.title}>
-<Link href={postPathBySlug(post.slug)}>{post.title}</Link>
-</li>
-))}
-</ul>
-</div>
-)}
-</Container>
-</Section>
+      {Array.isArray(relatedPostsList) && relatedPostsList.length > 0 && (
+        <div className={styles.relatedPosts}>
+          {relatedPostsTitle.name ? (
+            <span>
+              More from <Link href={relatedPostsTitle.link}>{relatedPostsTitle.name}</Link>
+            </span>
+          ) : (
+            <span>More Posts</span>
+          )}
+          <ul>
+            {relatedPostsList.map((post) => (
+              <li key={post.title}>
+                <Link href={postPathBySlug(post.slug)}>{post.title}</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Container>
+  </Section>
 </Layout>
 );
 }
@@ -181,10 +185,10 @@ props,
 }
 
 export async function getStaticPaths() {
-// Only render the most recent posts to avoid spending unnecessary time
+// Only render the most recent posts to avoid spending unecessary time
 // querying every single post from WordPress
 
-// Tip: this can be customized to use data or analytics to determine the
+// Tip: this can be customized to use data or analytitcs to determine the
 // most popular posts and render those instead
 
 const { posts } = await getRecentPosts({
